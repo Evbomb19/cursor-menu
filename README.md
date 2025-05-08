@@ -2,6 +2,7 @@
 
 
 > Open this page at [https://evbomb19.github.io/cursor-menu/](https://evbomb19.github.io/cursor-menu/)
+> ***Also import the built-in browser-event extension
 
 ## Use as Extension
 
