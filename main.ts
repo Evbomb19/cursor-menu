@@ -1,10 +1,20 @@
 
-
-
-
-
+/*
+* Custom menu that uses the browser cursor
+*/
+//% block="Cursor Menu"
+//% icon="\uf245"
+//% color=221
+//% groups=["Menu","Buttons","Miscellaneous"]
+//% blockGap=8
 namespace cursormenu {
 
+    /*
+    * Instructions on how to use the cursor menu
+    */
+    //% block="Instructions"
+    //% group="Miscellaneous"
+    //% weight="10"
     export function readInstructions() {
         game.splash("This is a custom menu that", "uses the browser cursor");
         game.splash("You'll need to import the", "browser events extension");
@@ -23,7 +33,7 @@ namespace cursormenu {
         public inMenu: Menu;
         public defaultImage: Image;
 
-        constructor(img: Image, x: number, y: number, z: number, action: Function, text?: string, moveWhenPressed?: boolean) {
+        constructor(img: Image, x: number, y: number, z: number, text?: string, moveWhenPressed?: boolean) {
             let defaultImg = img.clone();
             img.printCenter(text, img.height / 2 - 3, 1, image.font5);
             super(img);
@@ -44,11 +54,6 @@ namespace cursormenu {
             this.text = text;
             this.moveWhenPressed = moveWhenPressed;
             this.z = z;
-            this.action = action;
-
-            this.action = function () {
-                action();
-            }
         }
 
         public setText(text: string) {
@@ -56,21 +61,29 @@ namespace cursormenu {
             let img = this.defaultImage.clone();
             img.printCenter(text, img.height / 2 - 3, 1, image.font5);
             this.setImage(img);
-            return this;
         }
-        public setAction(action: Function) {
+
+        public setAction(action: () => void) {
             this.action = action;
-            return this;
         }
-        public addToAction(addition: Function) {
+        public addToAction(addition: () => void) {
             this.action = function () {
                 this.action();
                 addition();
             }
-            return this;
         }
 
-        public toString() {
+        /*
+        * @param action
+        * @param button
+        */
+        //% block="Set Action: $action on Button: $button"
+        //% group="Buttons"
+        public static _setAction(action: () => void, button: Button) {
+            button.action = action;
+        }
+
+        public toString(): string {
             if (this.text.length == 0) {
                 return this.x + ", " + this.y;
             }
@@ -120,7 +133,7 @@ namespace cursormenu {
             this.isOpen = false;
         }
 
-        public get(index: number) {
+        public get(index: number): Button {
             return this.buttons.get(index);
         }
         public addButton(button: Button) {
@@ -129,8 +142,8 @@ namespace cursormenu {
         public removeButton(button: Button) {
             this.buttons.removeElement(button);
         }
-        public removeIndex(index: number) {
-            this.buttons.removeAt(index);
+        public removeIndex(index: number): Button {
+            return this.buttons.removeAt(index);
         }
 
         public disable() {
@@ -147,7 +160,7 @@ namespace cursormenu {
             menus.removeElement(this);
         }
 
-        public toString() {
+        public toString(): string {
             let s = "";
             for (let i = 0; i < this.buttons.length; i++) {
                 s += this.buttons.get(i).toString();
@@ -160,17 +173,50 @@ namespace cursormenu {
     }
 
     let menus: Menu[] = [];
-    export function getMenus() {
+
+    //% block="All Menus"
+    //% group="Miscellaneous"
+    export function getMenus(): Menu[] {
         return menus;
     }
 
-    export function newMenu(buttons: Button[]) {
+    /*
+    * @param buttons
+    */
+    //% block="Create Menu With Buttons $buttons"
+    //% blockSetVariable="menu"
+    //% group="Menu"
+    export function newMenu(buttons: Button[]): Menu {
         return new Menu(buttons);
     }
-    export function newButton(img: Image, x: number, y: number, z: number, action: Function, text?: string, moveWhenPressed?: boolean) {
-        return new Button(img, x, y, z, action, text, moveWhenPressed);
+
+    /*
+    * Create a new Button
+    * @param img
+    * @param x
+    * @param y
+    * @param z
+    * @param text
+    * @param moveWhenPressed
+    */
+    //% block="Button  img: %img=screen_image_picker x: $x y: $y z: $z text: $text moveWhenPressed: $moveWhenPressed"
+    //% blockSetVariable="button"
+    //% inlineInputMode=inline
+    //% group="Buttons"
+    export function newButton(img: Image, x: number, y: number, z: number, text?: string, moveWhenPressed?: boolean): Button {
+        return new Button(img, x, y, z, text, moveWhenPressed);
     }
-    export function showText(topText: string, bottomText: string) {
+
+    /*
+    * Use this function instead of the game splash function (The splash function still works but it's buggy)
+    * @param topText
+    * @param bottomText
+    */
+    //% block="Show Text $topText $bottomText"
+    //% topText.shadow=text
+    //% bottomText.shadow=text
+    //% group="Miscellaneous"
+    export function showText(topText: string, bottomText?: string) {
         let enabledMenus: Menu[] = [];
         for (let m of menus) {
             if (m.enabled == true) {
@@ -178,7 +224,16 @@ namespace cursormenu {
                 m.disable();
             }
         }
-        game.splash(topText, bottomText);
+        let leftClick = leftClickPressA;
+        leftClickPressA = true;
+
+        if (bottomText != undefined) {
+            game.splash(topText, bottomText);
+        } else {
+            game.splash(topText);
+        }
+
+        leftClickPressA = leftClick
         for (let m of enabledMenus) {
             m.enable();
         }
@@ -200,20 +255,40 @@ namespace cursormenu {
         . . . . 1 1 .
     `;
     game.setDialogCursor(cursor);
+
+    /*
+    * A cursor that I made
+    */
+    //% block="Cursor Image"
+    //% group="Miscellaneous"
     export function cursorImage() {
         return cursor;
     }
 
 
     let noButtonPressed: Function = function () { };
+
+    /*
+    * Run a function everytime you click NOT on a button
+    * @param funct
+    */
+    //% block="On click on no button"
+    //% group="Miscellaneous"
     export function ifNoButtonPressed(funct: () => {}) {
         noButtonPressed = funct;
     }
 
 
     let buttonPressed: Button;
-    let leftClickPressA = true;
+    let leftClickPressA = false;
 
+    /*
+    * If true then A will be pressed
+    * every time you left click
+    * @param pressA
+    */
+    //% block="Left Click Also Presses A $pressA"
+    //% group="Miscellaneous"
     export function leftClickPressesA(pressA: boolean) {
         leftClickPressA = pressA;
     }
@@ -264,10 +339,10 @@ namespace cursormenu {
             mousePos.destroy();
         }
     });
-    browserEvents.onMouseMove(function (x: number, y: number) {
+    forever(function() {
         if (buttonPressed != null && browserEvents.MouseLeft.isPressed()) {
             let mousePos = sprites.create(img`1`);
-            mousePos.setPosition(x, y);
+            mousePos.setPosition(browserEvents.mouseX(), browserEvents.mouseY());
             if (!mousePos.overlapsWith(buttonPressed)) {
                 if (buttonPressed.moveWhenPressed) {
                     buttonPressed.y -= 2;
@@ -278,3 +353,4 @@ namespace cursormenu {
         }
     });
 }
+
